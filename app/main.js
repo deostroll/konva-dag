@@ -13,48 +13,49 @@ window.addEventListener('load', function() {
   });
   layer.add(rect);
   var dag = new Dag();
-  Array.from({
-    length: 6
-  }).forEach((_, x) => dag.create(x));
-  var edges = [
-    [1, 0],
-    [3, 1],
-    [3, 2],
-    [5, 2],
-    [5, 4],
-    [5, 0]
-  ];
-  edges.forEach(edg => dag.connect(edg[0], edg[1]));
+  // Array.from({
+  //   length: 6
+  // }).forEach((_, x) => dag.create(x));
+  var nodes = [0,1,2,3,4,5];
+  nodes.forEach(function(n) {
+    dag.create(n);
+  });
+  // var edges = [
+  //   [5, 11],
+  //   [7, 11],
+  //   [7, 8],
+  //   [3, 8],
+  //   [3, 10],
+  //   [11, 2],
+  //   [11, 9],
+  //   [11, 10],
+  //   [8, 9]
+  // ];
+  // edges.forEach(edg => {
+  //   var from = dag.indexOf(edg[0]), to = dag.indexOf(edg[1]);
+  //   dag.connect(from, to);
+  // });
+  var edges = [[1,0], [3,1], [3,2], [5,2], [5,4], [5,0]].forEach(edg => dag.connect(edg[0], edg[1]));
+
   console.log('Nodes:', dag.toString());
   console.log('Edges:', dag.getEdges().toString());
-  var dag = new Konva.Dag(dag, {
+  var kdag = new Konva.Dag(dag, {
     c: {
       fill: 'lightgreen',
       radius: 15
+    },
+    t: {
+      fontSize: 12,
+      fill:'black'
     }
-  });
-  var dagRect = dag.getClientRect();
-  // console.log('Dag Rect:', dagRect);
-  dag.offset({
-    x: dagRect.width/2,
-    y: dagRect.height/2
-  });
-  dag.position({
-    x: 200, y: 150
   });
 
   // layer.add(dag);
-  var env = dag.getEnvelope();
+  var env = kdag.getEnvelope();
   env.position({ x: stage.width()/2, y: stage.height()/2 });
   var envRect = env.getClientRect();
-  // var r = new Konva.Rect({
-  //   height: envRect.height,
-  //   width: envRect.width,
-  //   x: envRect.x,
-  //   y: envRect.y,
-  //   stroke: 'green'
-  // });
-  // layer.add(r);
+  var arr = dag.getCycles();
+  console.log('Cycles:', arr);
   layer.add(env);
   stage.add(layer);
 }, false);
