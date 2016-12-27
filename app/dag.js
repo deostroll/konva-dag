@@ -100,6 +100,16 @@
       if (filtered.length > 0) {
         filtered.forEach(f => {
           var n = list[f];
+          // if (n.mark === false) {
+          //   n.mark = true;
+          //   cache.push(n.item);
+          //   visit(n);
+          //   n.mark = false;
+          // }
+          // else {
+          //
+          // }
+          console.log('Caching:', n.item.value);
           n.mark = true;
           cache.push(n.item);
           visit(n);
@@ -108,11 +118,27 @@
       }
       else {
         //! no more nodes to mark...
-        if (indexes.some(i => list[i] === list[current])) {
-          //! we have something...
+        // if (indexes.some(i => list[i] === list[current])) {
+        //   //! we have a ring
+        // }
+        // else {
+        //   if (indexes.length === 1) {
+        //     //! we don't have anythiong
+        //   }
+        //   else {
+        //
+        //   }
+        // }
+        if (indexes.length === 1) {
+          // !this is a tail node...
         }
-        else {
-          //! we don't have anything...
+        else if (indexes.length > 0 && indexes.some(i => list[i] === list[current])) {
+          // !we have a ring
+          result.push(cache);
+        }
+        else if(indexes.length > 0) {
+          // !we have sub-ring...
+          console.warn('Sub-ring');
         }
       }
     };
@@ -125,7 +151,7 @@
       visit(obj);
       obj.mark = false;
     });
-
+    return result;
   };
 
   dag.prototype.indexOf = function(value) {
