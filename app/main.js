@@ -34,7 +34,7 @@ window.addEventListener('load', function() {
     }
   });
   var dagRect = dag.getClientRect();
-  console.log('Dag Rect:', dagRect);
+  // console.log('Dag Rect:', dagRect);
   dag.offset({
     x: dagRect.width/2,
     y: dagRect.height/2
@@ -42,7 +42,19 @@ window.addEventListener('load', function() {
   dag.position({
     x: 200, y: 150
   });
-  
-  layer.add(dag);
+
+  // layer.add(dag);
+  var env = dag.getEnvelope();
+  env.position({ x: stage.width()/2, y: stage.height()/2 });
+  var envRect = env.getClientRect();
+  // var r = new Konva.Rect({
+  //   height: envRect.height,
+  //   width: envRect.width,
+  //   x: envRect.x,
+  //   y: envRect.y,
+  //   stroke: 'green'
+  // });
+  // layer.add(r);
+  layer.add(env);
   stage.add(layer);
 }, false);
