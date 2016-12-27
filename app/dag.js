@@ -25,8 +25,7 @@
       var args = Array.from(arguments);
       if (args.length === 0) {
         return this.value.toString();
-      }
-      else {
+      } else {
         var fn = args[0];
         return fn(this);
       }
@@ -82,76 +81,71 @@
     var nodes = this.nodes.slice();
     nodes.sort(Dag.DEGREE_SORT);
     var iCache = {};
-    console.log('Degree: ', nodes.map(n => n.toString(Node.STRING_DEGREE)).toString() );
+    console.log('Degree: ', nodes.map(n => n.toString(Node.STRING_DEGREE)).toString());
     var list = nodes.map((n, i) => {
       iCache[n.value] = i;
-      return {item: n, mark: false, visited: false, lock: false}
+      return {
+        item: n,
+        mark: false,
+        visited: false
+      }
     });
-    var result = [], cache = [];
+    var result = [],
+      cache = [],
+      levels = {};
     var visit = function(obj) {
-      var nodes = obj.item.getAllNodes();
-      console.log('Children:', nodes.toString());
-      var indexes = nodes.map(n => { return iCache[n.value]; });
-
-      var filtered = indexes.filter(function(idx) {
-        return list[idx].mark === false;
-      });
-      console.log('Filtered:', filtered.map(f => list[f].item).toString());
-      if (filtered.length > 0) {
-        filtered.forEach(f => {
-          var n = list[f];
-          // if (n.mark === false) {
-          //   n.mark = true;
-          //   cache.push(n.item);
-          //   visit(n);
-          //   n.mark = false;
-          // }
-          // else {
-          //
-          // }
-          console.log('Caching:', n.item.value);
-          n.mark = true;
-          cache.push(n.item);
-          visit(n);
-          n.mark = false;
+      var level = visit.level++;
+      if (!obj.visited) {
+        var nodes = obj.item.getAllNodes();
+        console.log('Children:', nodes.toString(), 'Level:', level);
+        var indexes = nodes.map(n => {
+          return iCache[n.value];
         });
+        var filtered = indexes.filter(function(idx) {
+          return list[idx].mark === false;
+        });
+        levels[visit.level] = filtered;
+        console.log('Filtered:', filtered.map(f => list[f].item).toString(),
+          'Level:', level);
+        if (filtered.length > 0) {
+          filtered.forEach(f => {
+            var n = list[f];
+            console.log('Caching:', n.item.value, 'Level:', level);
+            n.mark = true;
+            cache.push(f);
+            visit(n);
+            n.mark = false;
+          });
+        } else {
+          //! no more nodes to mark...
+          if (indexes.length === 1) {
+            // !this is a tail node...
+          } else if (indexes.length > 0 && indexes.some(i => list[i] ===
+              list[current])) {
+            // !we have a ring
+            cache.forEach(idx => list[idx].visited = true);
+            console.log('Push...', 'Level:', level);
+            result.push(cache.slice());
+            cache = [current];
+          } else if (indexes.length > 0) {
+            // !we have sub-ring...
+            console.warn('Sub-ring');
+          }
+        }
       }
-      else {
-        //! no more nodes to mark...
-        // if (indexes.some(i => list[i] === list[current])) {
-        //   //! we have a ring
-        // }
-        // else {
-        //   if (indexes.length === 1) {
-        //     //! we don't have anythiong
-        //   }
-        //   else {
-        //
-        //   }
-        // }
-        if (indexes.length === 1) {
-          // !this is a tail node...
-        }
-        else if (indexes.length > 0 && indexes.some(i => list[i] === list[current])) {
-          // !we have a ring
-          result.push(cache);
-        }
-        else if(indexes.length > 0) {
-          // !we have sub-ring...
-          console.warn('Sub-ring');
-        }
-      }
+      visit.level--;
     };
+    visit.level = 0;
     var current;
-    list.forEach(function(obj, i){
-      cache = []
+    list.forEach(function(obj, i) {
+      cache = [i]
       obj.mark = true;
       current = i;
       console.log('i:', i, 'Mark object:', obj.item.value);
       visit(obj);
       obj.mark = false;
     });
-    return result;
+    return result.map(arr => arr.map(i => list[i].item));
   };
 
   dag.prototype.indexOf = function(value) {
