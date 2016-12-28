@@ -5,6 +5,7 @@
     this.id = null;
     this.out = [];
     this.in = [];
+
   }
 
   function Edge(from, to) {
@@ -30,6 +31,22 @@
         var fn = args[0];
         return fn(this);
       }
+    },
+    getEdges: function() {
+      var self = this;
+      var dag = self._dag;
+      var _in = this.in, _out = this.out;
+      var edges = [];
+      var current = this.id;
+      _in.forEach(n => {
+        var idx = dag.iCache[n.value];
+        edges.push([idx, current]);
+      });
+      _out.forEach(n=> {
+        var idx = dag.iCache[n.value];
+        edges.push([current, idx])
+      });
+      return edges;
     }
   };
 
@@ -40,6 +57,7 @@
   var dag = function() {
     this.nodes = [];
     this.edges = [];
+    this.iCache = {};
   };
 
   dag.prototype.create = function(obj) {
@@ -47,6 +65,8 @@
     // console.log(node.value);
     var idx = this.nodes.push(node);
     node.id = idx - 1;
+    this.iCache[node.value] = node.id;
+    node._dag = this;
   };
 
   dag.prototype.connect = function(from, to) {
@@ -80,82 +100,49 @@
 
   dag.prototype.getCycles = function() {
     var self = this;
-    var edges = this.edges.reduce((cache, e) => {
-      var a = e.toArray();
-      a.sort();
-      cache[a.join('')] = false;
-      return cache;
-    }, {});
-    var nodes = this.nodes.slice();
+    var nodes = this.nodes;
 
-    var iCache = nodes.reduce((c, n, i) => {
-      c[n.value] = i;
-      return c;
-    }, {});
+    nodes.forEach(function(node, current){
+      var edges = node.getEdges();
+      var len = edges.length;
+      var outer, inner;
+      if (len > 1) {
+        for (var i = 0; i < len; i++) {
+          outer = edges[i];
+          for (var j = i + 1; j < len; j++) {
+            inner = edges[j];
+            var [n1, n2] = _getEdgeNodes(outer, inner, current);
+            if (_isConnected(n1, n2)) {
+              console.log('Cycle:' [node, n1, n2].toString());
+            }            
+          }//end inner loop
+        }//end outer loop
+      }
+    });
 
-    var degSorted = nodes.sort(dag.DEGREE_SORT);
-    var cycle = [];
-    var result = [];
-
-    nodes.forEach(n => _visit(n));
-    return result;
-    function _visit(node, parent, startIndex) {
-      if (typeof parent === 'undefined') {
-        cycle.push(node);
-        var childs = node.getAllNodes();
-        var pIndex = iCache[node.value];
-        for (var i = 0; i < childs.length; i++) {
-          var c = childs[i];
-          var cIndex = iCache[c.value];
-          var edg = _tostr(pIndex, cIndex);
-          edges[edg] = true;
-          cycle.push(c);
-          _visit(c, edg, pIndex);
-        }
-      }
-      else {
-        var childs = node.getAllNodes();
-        var pIndex = iCache[node.value];
-        for (var i = 0; i < childs.length; i++) {
-          var c = childs[i];
-          var cIndex = iCache[c.value];
-          var edg = _tostr(pIndex, cIndex);
-          if (parent !== edg) {
-            if (edges[edg]) {
-              continue;
-            }
-            else if (cIndex !== startIndex) {
-              edges[edg] = true;
-              cycle.push(c);
-              _visit(c, edg, startIndex);
-              // edges[edg] = false;
-            }
-            else {
-              result.push(cycle);
-              //not sure what to do here...
-              cycle = [];
-            }
-          }
-          else if(childs.length === 1){
-            //! discard the cycle
-            cycle = [self.nodes[startIndex]];
-          }
-        }
-      }
-    };
-
-    function _tostr(a, b) {
-      if (a > b) {
-        return b.toString() + a.toString();
-      }
-      else if(b > a) {
-        return a.toString() + b.toString();
-      }
-      else {
-        return a.toString() + b.toString();
-      }
+    function _isConnected(n1, n2) {
+      return n1.getAllNodes().indexOf(n2) > -1;
     }
-  };
+
+    function _getEdgeNodes(e1, e2, current) {
+      var node1, node2;
+      if (e1[0] !== current) {
+        node1 = nodes[e1[0]];
+      }
+      else {
+        node1 = nodes[e1[1]]
+      }
+
+      if (e2[0] !== current) {
+        node2 = nodes[e2[0]];
+      }
+      else {
+        node2 = nodes[e2[1]];
+      }
+      return [node1, node2];
+    }
+
+  };//end dag.prototype.getCycles
 
   dag.prototype.indexOf = function(value) {
     return this.nodes.map(n => n.value).indexOf(value);
