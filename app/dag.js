@@ -79,7 +79,7 @@
 
   dag.prototype.getCycles = function() {
     var nodes = this.nodes.slice();
-    nodes.sort(Dag.DEGREE_SORT);
+    nodes.sort(dag.DEGREE_SORT);
     var iCache = {};
     console.log('Degree: ', nodes.map(n => n.toString(Node.STRING_DEGREE)).toString());
     var list = nodes.map((n, i) => {
@@ -122,6 +122,7 @@
             // !this is a tail node...
             console.log('Exhausted...');
             cache = [current];
+
           } else if (indexes.length > 0 && indexes.some(i => list[i] ===
               list[current])) {
             // !we have a ring
@@ -154,6 +155,12 @@
     return this.nodes.map(n => n.value).indexOf(value);
   };
 
-  window.Dag = dag;
-
+  if (typeof window !== 'undefined' && window === this) {
+    window.Dag = dag;
+  }
+  else if (typeof module === 'object' && module && typeof module.exports === 'object' && module.exports) {
+    module.exports = {
+      Dag: dag
+    };
+  }
 })(this);
