@@ -1,5 +1,12 @@
 (function(window) {
 
+  var logFlag = false;
+  function debug() {
+    if (logFlag) {
+      console.log.apply(console, arguments);
+    }
+  }
+
   function extend(a, b) {
     for (var key in b) {
       a[key] = b[key];
@@ -68,6 +75,10 @@
     this.nodes = [];
     this.edges = [];
     this.iCache = {};
+    Object.defineProperty(this, '_debug', {
+      get: function() { return logFlag; },
+      set: function(value) { logFlag = value; }
+    })
   };
 
   dag.prototype.create = function(obj) {
@@ -113,11 +124,14 @@
     var nodes = this.nodes;
     var result = [];
     var visit = function(node, parent) {
-      console.log('Visiting:', node.value, 'From:', parent ? parent.value :
-        '-NA-');
+      visit.level++;
+      debug('Level:', visit.level, 'Visiting:', node.value,
+        'From:', parent ? parent.value : 'null');
       var children = node.getAllNodes();
+      debug('Level:', visit.level, 'Children:', children.toString());
       for (var i = 0, j = children.length; i < j; i++) {
         var child = children[i];
+        debug('Level:', visit.level, 'Processing child:', child.value, 'Of node:', node.value, 'Parent:', parent ? parent.value : 'null');
         if (child !== parent) {
           var idx = self.iCache[child.value];
           if (visit.visited[idx] === 0) {
@@ -131,23 +145,27 @@
               var cycle = [];
               var stack = visit.stack.slice();
               var k;
-              while ((k = stack.pop()) !== idx) {
+              while ( typeof (k = stack.pop()) !== 'undefined' && k !== idx) {
                 cycle.unshift(k);
               }
-              cycle.unshift(k);
-              result.push(cycle);
+              if (typeof k !== 'undefined') {
+                debug('Level:', visit.level, 'Cycle:', cycle.toString());
+                cycle.unshift(k);
+                result.push(cycle);
+              }
             }
           } // if-else end //if (visit.visited[idx] === false)
         }
+        debug('Level:', visit.level, 'Done processing child:', child.value, 'Of node:', node.value, 'Parent:', parent ? parent.value : 'null');
       } //end for
-      return result;
+      visit.level--;
     };
 
     visit.stack = [];
     visit.visited = nodes.map(f => 0);
-
+    visit.level = 0;
     for (var i = 0; i < nodes.length; i++) {
-      if (visit.visited[i] === false) {
+      if (visit.visited[i] === 0) {
         var node = nodes[i];
         visit.stack.push(i);
         visit.visited[i] = 1;
