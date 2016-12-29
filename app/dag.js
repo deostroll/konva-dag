@@ -120,30 +120,37 @@
         var child = children[i];
         if (child !== parent) {
           var idx = self.iCache[child.value];
-          if (visit.visited[idx] === false) {
-            visit.stack.push(child);
-            visit.visited[idx] = true;
+          if (visit.visited[idx] === 0) {
+            visit.stack.push(idx);
+            visit.visited[idx] = 1;
             visit(child, node);
             visit.stack.pop();
           } else {
             // result.push(visit.stack.slice())
             if (parent) {
-              console.log(visit.stack.toString());
-              result.push(visit.stack.slice());
+              var cycle = [];
+              var stack = visit.stack.slice();
+              var k;
+              while ((k = stack.pop()) !== idx) {
+                cycle.unshift(k);
+              }
+              cycle.unshift(k);
+              result.push(cycle);
             }
-          } // if-else end //if (visit.visited[idx] === false) {
+          } // if-else end //if (visit.visited[idx] === false)
         }
       } //end for
+      return result;
     };
 
     visit.stack = [];
-    visit.visited = nodes.map(f => false);
+    visit.visited = nodes.map(f => 0);
 
     for (var i = 0; i < nodes.length; i++) {
       if (visit.visited[i] === false) {
         var node = nodes[i];
-        visit.stack.push(node);
-        visit.visited[i] = true;
+        visit.stack.push(i);
+        visit.visited[i] = 1;
         visit(node);
         visit.stack.pop();
       }
